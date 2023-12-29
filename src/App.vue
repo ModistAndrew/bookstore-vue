@@ -1,26 +1,31 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <n-loading-bar-provider>
+    <n-message-provider>
+      <n-notification-provider>
+        <n-dialog-provider>
+          <n-config-provider :theme="theme">
+            <demo/>
+          </n-config-provider>
+        </n-dialog-provider>
+      </n-notification-provider>
+    </n-message-provider>
+  </n-loading-bar-provider>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import {defineComponent, ref} from "vue";
+import Demo from "./Menu.vue";
+import {lightTheme, darkTheme} from 'naive-ui'
+export const theme = ref(lightTheme);
 
-export default {
-  name: 'App',
+export default defineComponent({
+  setup() {
+    return {
+      theme
+    }
+  },
   components: {
-    HelloWorld
+    Demo,
   }
-}
+});
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
