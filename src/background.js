@@ -52,7 +52,7 @@ async function createWindow() {
         win.webContents.send(data[0], data.slice(1));
     });
     backend.stderr.on('data', function (str) {
-        win.webContents.send('error', str.toString()); //see Menu.vue
+        win.webContents.send('errorMessage', str.toString()); //see Menu.vue
     });
     ipcMain.on('op', (event, id, op) => {
         console.log(`op ${event.sender} ${op}`);

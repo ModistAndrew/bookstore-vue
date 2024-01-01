@@ -3,6 +3,7 @@ node_modules
 /dist
 
 code.exe
+storage
 
 # local env files
 .env.local

@@ -4,7 +4,7 @@
         default-value="finance"
         size="large"
         animated
-        style="padding: 3vh 3vw;margin: 20% 30%;min-height: 60%;"
+        style="padding: 3vh 3vw;min-height: 100%;"
     >
       <n-tab-pane name="finance" tab="Finance">
         <n-statistic label="Income">
@@ -17,9 +17,8 @@
                         placeholder="Enter Count or Show All" @keydown.enter="showFinance"/>
         <n-divider/>
         <n-log
-            :rows="5"
+            :rows="10"
             :log="financeLog"
-            class="logStyle"
         />
         <n-button block style="margin-top: 1vh" @click="showFinanceLog">
           Show Finance Log
@@ -27,18 +26,16 @@
       </n-tab-pane>
       <n-tab-pane name="logs" tab="Logs">
         <n-log
-            :rows="5"
+            :rows="10"
             :log="employeeLog"
-            class="logStyle"
         />
         <n-button block style="margin-top: 1vh" @click="showEmployeeLog">
           Show Employee Log
         </n-button>
         <n-divider/>
         <n-log
-            :rows="5"
+            :rows="10"
             :log="logs"
-            class="logStyle"
         />
         <n-button block style="margin-top: 1vh" @click="showLogs">
           Show Logs
@@ -78,9 +75,3 @@ export default defineComponent({
   }
 });
 </script>
-
-<style scoped>
-.logStyle {
-  background: aliceblue;
-}
-</style>

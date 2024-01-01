@@ -1,26 +1,37 @@
 <template>
   <div style="display: flex; justify-content: center; align-items: center">
     <n-tabs
-        default-value="signIn"
+        v-model:value="currentTab"
         size="large"
         animated
         style="padding: 3vh 3vw;margin: 20% 30%;min-height: 60%;"
-        @update:value="handleTabChange"
     >
       <n-tab-pane name="user" tab="User">
-        <n-breadcrumb separator=">">
-          <n-breadcrumb-item v-for="(label, index) in breadcrumbItems" :key="index">
-            {{ label }}
-          </n-breadcrumb-item>
-        </n-breadcrumb>
-        <n-card :title="currentName" size="huge" style="display: flex; align-items: center; margin: 3vh 0">
-          <n-text type="info">
-            {{ currentId }}
-          </n-text>
-        </n-card>
-        <n-button type="error" @click="logout" block secondary strong>
-          Logout
-        </n-button>
+        <n-empty :show-description="false" size="huge" v-if="notUser">
+          <template #icon>
+            <img src="./assets/empty.jpg" alt="empty" style="width: 100%"/>
+          </template>
+          <template #extra>
+            <n-button size="small" @click="toLog">
+              Logged in
+            </n-button>
+          </template>
+        </n-empty>
+        <div v-else>
+          <n-breadcrumb separator=">">
+            <n-breadcrumb-item v-for="(label, index) in currentUsers" :key="index">
+              {{ label }}
+            </n-breadcrumb-item>
+          </n-breadcrumb>
+          <n-card :title="currentId" size="huge" style="display: flex; align-items: center; margin: 3vh 0">
+            <n-text :type="currentColor" strong>
+              {{ currentName }}
+            </n-text>
+          </n-card>
+          <n-button type="error" @click="logout" block secondary strong>
+            Logout
+          </n-button>
+        </div>
       </n-tab-pane>
       <n-tab-pane name="signIn" tab="Sign in">
         <n-form>
@@ -54,7 +65,7 @@
             </n-button>
           </n-gi>
           <n-gi>
-            <n-button type="info" block secondary strong @click="addClerk">
+            <n-button type="info" block secondary strong @click="addClerk" :disabled="notAdmin">
               Add Clerk
             </n-button>
           </n-gi>
@@ -70,7 +81,7 @@
           <n-gi>
             <n-popconfirm :show-icon="false" @positive-click="changePassword" placement="bottom">
               <template #trigger>
-                <n-button type="info" block secondary strong>
+                <n-button type="info" block secondary strong :disabled="notUser">
                   Change Password
                 </n-button>
               </template>
@@ -85,7 +96,7 @@
             </n-popconfirm>
           </n-gi>
           <n-gi>
-            <n-button type="error" block secondary strong @click="deleteUser">
+            <n-button type="error" block secondary strong @click="deleteUser" :disabled="notAdmin">
               Delete User
             </n-button>
           </n-gi>
@@ -99,8 +110,24 @@
 import {defineComponent, ref} from "vue";
 import {useMessage} from "naive-ui";
 import {addUser, changePassword, deleteUser, login, logout, showUser} from "@/api";
+const currentUsers = ref([]);
+const currentId = ref("");
+const currentName = ref("");
+export const currentPrivilege = ref(0);
+const colorMap = {
+  0: "info",
+  1: "info",
+  3: "primary",
+  7: "warning"
+};
 
 export default defineComponent({
+  computed: {
+    notUser: () => currentPrivilege.value < 1,
+    notClerk: () => currentPrivilege.value < 3,
+    notAdmin: () => currentPrivilege.value < 7,
+    currentColor: () => colorMap[currentPrivilege.value],
+  },
   setup() {
     const message = useMessage();
     const userId = ref("");
@@ -111,9 +138,22 @@ export default defineComponent({
     const userIdAdvanced = ref("");
     const oldPassword = ref("");
     const newPassword = ref("");
-    const breadcrumbItems = ref([]);
-    const currentId = ref("");
-    const currentName = ref("");
+    const currentTab = ref("signIn");
+    const updateUser = () => {
+      showUser(data => {
+        currentUsers.value = data.map(user => user.id);
+        if (data.length > 0) {
+          let last = data[data.length - 1];
+          currentId.value = last.id;
+          currentName.value = last.name;
+          currentPrivilege.value = Number(last.privilege);
+        } else {
+          currentId.value = "";
+          currentName.value = "";
+          currentPrivilege.value = 0;
+        }
+      });
+    }
     return {
       userId,
       password,
@@ -123,27 +163,33 @@ export default defineComponent({
       userIdAdvanced,
       oldPassword,
       newPassword,
-      breadcrumbItems,
+      currentUsers,
       currentId,
       currentName,
-      signIn: () => login(userId.value, password.value, data => message.info(data)),
-      logout: () => logout(data => message.info(data[0])),
-      signUp: () => addUser(userIdAdd.value, userNameAdd.value, passwordAdd.value, false, data => message.info(data)),
-      addClerk: () => addUser(userIdAdd.value, userNameAdd.value, passwordAdd.value, true, data => message.info(data)),
-      deleteUser: () => deleteUser(userIdAdvanced.value, data => message.info(data)),
-      changePassword: () => changePassword(userIdAdvanced.value, oldPassword.value, newPassword.value, data => message.info(data)),
-      handleTabChange: (value) => {
-        if (value === "user") {
-          showUser(data => {
-            if (data.length === 0) {
-              message.info("No user logged in");
-              return;
-            }
-            breadcrumbItems.value = data.map(account => account.id);
-            currentId.value = data[data.length - 1].id;
-            currentName.value = data[data.length - 1].name;
-          });
-        }
+      currentPrivilege,
+      currentTab,
+      signIn: () => login(userId.value, password.value, data => {
+        updateUser();
+        message.success("Signed in");
+      }),
+      logout: () => logout(data => {
+        updateUser();
+        message.success("Logged out");
+      }),
+      signUp: () => addUser(userIdAdd.value, userNameAdd.value, passwordAdd.value, false, data => {
+        message.success("Signed up");
+      }),
+      addClerk: () => addUser(userIdAdd.value, userNameAdd.value, passwordAdd.value, true, data => {
+        message.success("Clerk added");
+      }),
+      deleteUser: () => deleteUser(userIdAdvanced.value, data => {
+        message.success("User deleted");
+      }),
+      changePassword: () => changePassword(userIdAdvanced.value, oldPassword.value, newPassword.value, data => {
+        message.success("Password changed");
+      }),
+      toLog: () => {
+        currentTab.value = "signIn";
       }
     };
   }

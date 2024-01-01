@@ -24,8 +24,11 @@ function getBook(str) {
 
 function getBooks(data) {
     let books = [];
+    if (data === null) {
+        return books;
+    }
     data.forEach((item) => {
-        if (item) {
+        if (item) { //in case of empty line
             books.push(getBook(item));
         }
     });
@@ -45,7 +48,7 @@ function getAccount(str) {
 
 function getAccounts(data) {
     let accounts = [];
-    if(data.length===0) {
+    if (data === null || data.length === 0) {
         return accounts;
     }
     let currentAccount = getAccount(data.pop());
@@ -66,39 +69,39 @@ function getAccounts(data) {
 }
 
 function getFinance(data) {
-    if(data.length===0) {
+    if (data.length === 0) {
         return ["0.00", "0.00"];
     }
     let s = data[0].split(' ');
     return [s[1], s[3]];
 }
 
+function receive(channel, callback, mapping = data=>data) {
+    ipcRenderer.once(channel, (event, data) => {
+        if(data.pop()==='SUCCESS') {
+            callback(mapping(data));
+        }
+    })
+}
+
 export function login(username, password, callback) {
     ipcRenderer.send('op', 'login', `su ${username} ${password}`);
-    ipcRenderer.once('login', (event, data) => {
-        callback(data);
-    });
+    receive('login', callback);
 }
 
 export function search(key, value, callback) {
     ipcRenderer.send('op', 'search', key === '' ? 'show' : `show -${argTypes[key]}=${withQuotient[key] ? `"${value}"` : value}`);
-    ipcRenderer.once('search', (event, data) => {
-        callback(getBooks(data));
-    });
+    receive('search', callback, getBooks);
 }
 
 export function buy(key, cnt, callback) {
     ipcRenderer.send('op', 'buy', `buy ${key} ${cnt}`);
-    ipcRenderer.once('buy', (event, data) => {
-        callback(data);
-    });
+    receive('buy', callback);
 }
 
 export function add(key, callback) {
     ipcRenderer.send('op', 'add', `addBook ${key}`);
-    ipcRenderer.once('add', (event, data) => {
-        callback(data);
-    });
+    receive('add', callback);
 }
 
 export function edit(values, callback) {
@@ -109,70 +112,50 @@ export function edit(values, callback) {
         }
     });
     ipcRenderer.send('op', 'edit', operation);
-    ipcRenderer.once('edit', (event, data) => {
-        callback(data);
-    });
+    receive('edit', callback);
 }
 
 export function importBook(quantity, cost, callback) {
     ipcRenderer.send('op', 'import', `import ${quantity} ${cost}`);
-    ipcRenderer.once('import', (event, data) => {
-        callback(data);
-    });
+    receive('import', callback);
 }
 
 export function select(key, callback) {
     ipcRenderer.send('op', 'select', `select ${key}`);
-    ipcRenderer.once('select', (event, data) => {
-        callback(data);
-    });
+    receive('select', callback);
 }
 
 export function addUser(id, name, password, isClerk, callback) {
     ipcRenderer.send('op', 'addUser', isClerk ? `useradd ${id} ${password} 3 ${name}` : `register ${id} ${password} ${name}`);
-    ipcRenderer.once('addUser', (event, data) => {
-        callback(data);
-    });
+    receive('addUser', callback);
 }
 
 export function logout(callback) {
     ipcRenderer.send('op', 'logout', 'logout');
-    ipcRenderer.once('logout', (event, data) => {
-        callback(data);
-    });
+    receive('logout', callback);
 }
 
 export function changePassword(id, oldPassword, newPassword, callback) {
     ipcRenderer.send('op', 'changePassword', `passwd ${id} ${oldPassword} ${newPassword}`);
-    ipcRenderer.once('changePassword', (event, data) => {
-        callback(data);
-    });
+    receive('changePassword', callback);
 }
 
 export function deleteUser(id, callback) {
     ipcRenderer.send('op', 'deleteUser', `delete ${id}`);
-    ipcRenderer.once('deleteUser', (event, data) => {
-        callback(data);
-    });
+    receive('deleteUser', callback);
 }
 
 export function showUser(callback) {
     ipcRenderer.send('op', 'showUser', 'showUser');
-    ipcRenderer.once('showUser', (event, data) => {
-        callback(getAccounts(data));
-    });
+    receive('showUser', callback, getAccounts);
 }
 
 export function showFinance(cnt, callback) {
-    ipcRenderer.send('op', 'showFinance', `show finance ${cnt===null?'':cnt}`);
-    ipcRenderer.once('showFinance', (event, data) => {
-        callback(getFinance(data));
-    });
+    ipcRenderer.send('op', 'showFinance', `show finance ${cnt === null ? '' : cnt}`);
+    receive('showFinance', callback, getFinance);
 }
 
 export function report(str, callback) {
     ipcRenderer.send('op', 'report', `${str}`);
-    ipcRenderer.once('report', (event, data) => {
-        callback(data);
-    });
+    receive('report', callback);
 }

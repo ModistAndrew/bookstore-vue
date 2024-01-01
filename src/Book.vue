@@ -20,7 +20,7 @@
     <div style="display: flex; align-items: center; justify-content:space-evenly; width:100%">
       <n-popconfirm :show-icon="false" @positive-click="buyBtn">
         <template #trigger>
-          <n-button secondary type="primary" style="width: 20%" :disabled="checkedRowKeys.length===0">Buy</n-button>
+          <n-button secondary type="primary" style="width: 20%" :disabled="notSelected">Buy</n-button>
         </template>
         <n-form>
           <n-form-item label="Count">
@@ -31,7 +31,7 @@
       <n-divider vertical/>
       <n-popconfirm :show-icon="false" @positive-click="addBtn">
         <template #trigger>
-          <n-button secondary type="info" style="width: 20%">Add</n-button>
+          <n-button secondary type="info" style="width: 20%" :disabled="notClerk">Add</n-button>
         </template>
         <n-form>
           <n-form-item label="ISBN">
@@ -41,7 +41,7 @@
       </n-popconfirm>
       <n-popconfirm :show-icon="false" @positive-click="editBtn">
         <template #trigger>
-          <n-button secondary type="info" style="width: 20%">Edit</n-button>
+          <n-button secondary type="info" style="width: 20%" :disabled="notClerkSelected">Edit</n-button>
         </template>
         <n-form>
           <n-form-item label="ISBN">
@@ -63,7 +63,7 @@
       </n-popconfirm>
       <n-popconfirm :show-icon="false" @positive-click="importBtn">
         <template #trigger>
-          <n-button secondary type="info" style="width: 20%">Import</n-button>
+          <n-button secondary type="info" style="width: 20%" :disabled="notClerkSelected">Import</n-button>
         </template>
         <n-form>
           <n-form-item label="Count">
@@ -79,9 +79,10 @@
 </template>
 
 <script>
-import {defineComponent, ref} from "vue";
+import {computed, defineComponent, ref} from "vue";
 import {useMessage} from "naive-ui";
 import {add, buy, edit, importBook, search, select} from "@/api";
+import {currentPrivilege} from "@/Login.vue";
 
 const createColumns = () => {
   return [
@@ -118,10 +119,10 @@ const createColumns = () => {
 
 export default defineComponent({
   setup() {
+    const checkedRowKeys = ref([]);
     const searchInput = ref("");
     const searchType = ref("ISBN");
     const message = useMessage();
-    const checkedRowKeysRef = ref([]);
     const books = ref([]);
     const buyCnt = ref(0);
     const addISBN = ref("");
@@ -132,6 +133,17 @@ export default defineComponent({
     const editPrice = ref(0.00);
     const importCnt = ref(0);
     const totalCost = ref(0.00);
+    const editCurrent = edit => {
+      let index = books.value.findIndex(item => item.key === checkedRowKeys.value[0]);
+      if (index >= 0) {
+        let current = books.value[index];
+        edit(current);
+        checkedRowKeys.value = [current.key];
+      }
+    }
+    const notSelected = computed(() => checkedRowKeys.value.length === 0);
+    const notClerk = computed(() => currentPrivilege.value < 3);
+    const notClerkSelected = computed(() => notClerk.value || notSelected.value);
     return {
       searchInput,
       searchType,
@@ -145,6 +157,10 @@ export default defineComponent({
       importCnt,
       totalCost,
       addISBN,
+      checkedRowKeys,
+      notSelected,
+      notClerk,
+      notClerkSelected,
       searchOptions: [
         {
           label: "ISBN",
@@ -163,25 +179,61 @@ export default defineComponent({
           value: "Keyword"
         }
       ],
-      handleInput: () => search(searchType.value, searchInput.value, data => books.value = data),
-      showAll: () => search("", "", data => books.value = data),
-      changeSelection: (value) => select(value, data => message.info(data[0])),
-      buyBtn: () => buy(checkedRowKeysRef.value[0], buyCnt.value, data => message.info(data[0])),
-      addBtn: () => add(addISBN.value, data => message.info(data[0])),
-      editBtn: () => edit({
-        ISBN: editISBN.value,
-        Name: editName.value,
-        Author: editAuthor.value,
-        Keyword: editKeyword.value,
-        Price: editPrice.value
-      }, data => message.info(data[0])),
-      importBtn: () => importBook(importCnt.value, totalCost.value, data => message.info(data[0])),
-      checkedRowKeys: checkedRowKeysRef,
+      handleInput: () => search(searchType.value, searchInput.value, data => {
+        books.value = data;
+      }),
+      showAll: () => search("", "", data => {
+        books.value = data;
+      }),
+      changeSelection: (value) => {
+        if (!notClerk.value) {
+          select(value, data => {
+          })
+        }
+      },
+      buyBtn: () => buy(checkedRowKeys.value[0], buyCnt.value, data =>
+          editCurrent(book => {
+            book.Stock -= buyCnt.value;
+            message.success("Cost: "+data[0]);
+          })),
+      addBtn:
+          () => add(addISBN.value, data => {
+            message.success("Book added");
+          }),
+      editBtn:
+          () => edit({
+            ISBN: editISBN.value,
+            Name: editName.value,
+            Author: editAuthor.value,
+            Keyword: editKeyword.value,
+            Price: editPrice.value
+          }, data => editCurrent(book => {
+            if (editISBN.value) {
+              book.ISBN = editISBN.value;
+              book.key = editISBN.value;
+            }
+            if (editName.value) {
+              book.Name = editName.value;
+            }
+            if (editAuthor.value) {
+              book.Author = editAuthor.value;
+            }
+            if (editKeyword.value) {
+              book.Keyword = editKeyword.value;
+            }
+            if (editPrice.value) {
+              book.Price = editPrice.value;
+            }
+          })),
+      importBtn: () => importBook(importCnt.value, totalCost.value, data => editCurrent(book => {
+        book.Stock += importCnt.value;
+      })),
       pagination: {
         pageSize: 20
       },
       columns: createColumns()
-    };
+    }
+        ;
   }
 });
 </script>
