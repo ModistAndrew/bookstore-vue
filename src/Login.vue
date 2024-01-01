@@ -36,10 +36,10 @@
       <n-tab-pane name="signIn" tab="Sign in">
         <n-form>
           <n-form-item-row label="User Id">
-            <n-input v-model:value="userId"/>
+            <n-input v-model:value="userId" @keydown.enter="toInput1"/>
           </n-form-item-row>
           <n-form-item-row label="Password">
-            <n-input type="password" v-model:value="password"/>
+            <n-input ref="input1" type="password" v-model:value="password" @keydown.enter="signIn"/>
           </n-form-item-row>
         </n-form>
         <n-button @click="signIn" type="primary" block secondary strong>
@@ -49,13 +49,13 @@
       <n-tab-pane name="signUp" tab="Sign up">
         <n-form>
           <n-form-item-row label="User Id">
-            <n-input v-model:value="userIdAdd"/>
+            <n-input v-model:value="userIdAdd"  @keydown.enter="toInput2"/>
           </n-form-item-row>
           <n-form-item-row label="User Name">
-            <n-input v-model:value="userNameAdd"/>
+            <n-input ref="input2" v-model:value="userNameAdd"  @keydown.enter="toInput3"/>
           </n-form-item-row>
           <n-form-item-row label="Password">
-            <n-input v-model:value="passwordAdd" type="password"/>
+            <n-input ref="input3" v-model:value="passwordAdd" type="password"/>
           </n-form-item-row>
         </n-form>
         <n-grid x-gap="12" cols="2">
@@ -110,6 +110,8 @@
 import {defineComponent, ref} from "vue";
 import {useMessage} from "naive-ui";
 import {addUser, changePassword, deleteUser, login, logout, showUser} from "@/api";
+
+
 const currentUsers = ref([]);
 const currentId = ref("");
 const currentName = ref("");
@@ -126,7 +128,7 @@ export default defineComponent({
     notUser: () => currentPrivilege.value < 1,
     notClerk: () => currentPrivilege.value < 3,
     notAdmin: () => currentPrivilege.value < 7,
-    currentColor: () => colorMap[currentPrivilege.value],
+    currentColor: () => colorMap[currentPrivilege.value]
   },
   setup() {
     const message = useMessage();
@@ -139,6 +141,9 @@ export default defineComponent({
     const oldPassword = ref("");
     const newPassword = ref("");
     const currentTab = ref("signIn");
+    const input1 = ref(null);
+    const input2 = ref(null);
+    const input3 = ref(null);
     const updateUser = () => {
       showUser(data => {
         currentUsers.value = data.map(user => user.id);
@@ -168,6 +173,9 @@ export default defineComponent({
       currentName,
       currentPrivilege,
       currentTab,
+      input1,
+      input2,
+      input3,
       signIn: () => login(userId.value, password.value, data => {
         updateUser();
         message.success("Signed in");
@@ -190,6 +198,15 @@ export default defineComponent({
       }),
       toLog: () => {
         currentTab.value = "signIn";
+      },
+      toInput1: () => {
+          input1.value.focus();
+      },
+      toInput2: () => {
+        input2.value.focus();
+      },
+      toInput3: () => {
+        input3.value.focus();
       }
     };
   }
