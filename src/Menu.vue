@@ -75,7 +75,7 @@ export default defineComponent({
         ),
         key: "book",
         icon: renderIcon(BookOutline),
-        disabled: currentPrivilege.value < 1
+        show: currentPrivilege.value >= 1
       },
       {
         label: () => h(
@@ -89,7 +89,7 @@ export default defineComponent({
         ),
         key: "log",
         icon: renderIcon(NewspaperOutline),
-        disabled: currentPrivilege.value < 7
+        show: currentPrivilege.value >= 7
       },
       {
         label: () => h(

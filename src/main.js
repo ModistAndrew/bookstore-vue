@@ -1,4 +1,4 @@
-import {createRouter, createWebHashHistory, createWebHistory} from 'vue-router'
+import {createRouter, createWebHashHistory} from 'vue-router'
 import { createApp } from 'vue'
 import App from './App.vue'
 import naive from 'naive-ui'
@@ -12,7 +12,7 @@ const routes = [
     { path: '/log', name:'Log', component: () => import ('./Log.vue') },
 ]
 const router = createRouter({
-    history: process.env.IS_ELECTRON ? createWebHashHistory() : createWebHistory(),
+    history: createWebHashHistory(),
     routes,
 })
 app.use(router)

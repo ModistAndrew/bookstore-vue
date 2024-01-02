@@ -18,8 +18,9 @@ protocol.registerSchemesAsPrivileged([
 async function createWindow() {
     // Create the browser window.
     const win = new BrowserWindow({
+        autoHideMenuBar: true,
+        show: false,
         webPreferences: {
-            show: false,
             devTools: true,
             // Use pluginOptions.nodeIntegration, leave this alone
             // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
@@ -28,7 +29,6 @@ async function createWindow() {
         }
     })
     win.maximize();
-    win.removeMenu();
     win.show();
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         // Load the url of the dev server if in development mode
@@ -40,7 +40,7 @@ async function createWindow() {
         win.loadURL('app://./index.html')
     }
 
-    const backend = require('child_process').spawn('code.exe');
+    const backend = require('cross-spawn').spawn('code.exe');
     backend.stdout.on('data', function (str) {
         let data = str.toString().split(/\r?\n/).slice(0, -1);
         console.log(`str ${str.toString()}`);
@@ -68,6 +68,7 @@ async function createWindow() {
         electron.shell.openExternal(url);
         return { action: 'deny' };
     });
+    win.webContents.send('errorMessage', "PATH: "+process.env.PORTABLE_EXECUTABLE_DIR)
 }
 
 // Quit when all windows are closed.
