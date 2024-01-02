@@ -5,9 +5,11 @@ module.exports = defineConfig({
         electronBuilder: {
             nodeIntegration: true,
             outputDir: 'app-for-windows',
-            extraResources: [
-                { from: 'code.exe', to: 'code.exe' },
-            ],
+            builderOptions: {
+                extraFiles: [
+                    {from: 'dist_backend', to: 'dist_backend'},
+                ]
+            }
         }
     }
 })

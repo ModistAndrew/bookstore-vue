@@ -40,7 +40,7 @@ async function createWindow() {
         win.loadURL('app://./index.html')
     }
 
-    const backend = require('cross-spawn').spawn('code.exe');
+    const backend = require('cross-spawn').spawn('dist_backend/code.exe');
     backend.stdout.on('data', function (str) {
         let data = str.toString().split(/\r?\n/).slice(0, -1);
         console.log(`str ${str.toString()}`);
@@ -68,7 +68,6 @@ async function createWindow() {
         electron.shell.openExternal(url);
         return { action: 'deny' };
     });
-    win.webContents.send('errorMessage', "PATH: "+process.env.PORTABLE_EXECUTABLE_DIR)
 }
 
 // Quit when all windows are closed.

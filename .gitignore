@@ -2,7 +2,7 @@
 node_modules
 /dist
 /app-for-windows
-code.exe
+/dist_backend
 storage
 
 # local env files

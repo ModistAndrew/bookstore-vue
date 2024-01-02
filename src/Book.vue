@@ -222,11 +222,11 @@ export default defineComponent({
               book.Keyword = editKeyword.value;
             }
             if (editPrice.value) {
-              book.Price = editPrice.value;
+              book.Price = editPrice.value.toFixed(2);
             }
           })),
       importBtn: () => importBook(importCnt.value, totalCost.value, data => editCurrent(book => {
-        book.Stock += importCnt.value;
+        book.Stock = Number(book.Stock) + Number(importCnt.value);
       })),
       pagination: {
         pageSize: 20
